@@ -36,5 +36,24 @@ namespace habilitations2024.model
         public string Mail { get; set; }
         public string Pwd { get; set; }
         public Profil Profil { get; set; }
+        public class Developpeur
+{
+    public int Id { get; set; }
+    public string Nom { get; set; }
+    public string Prenom { get; set; }
+    public string Tel { get; set; }
+    public string Mail { get; set; }
+    public string ProfilLibelle { get; set; } // Si jointure avec la table profil
+
+    public Developpeur(int id, string nom, string prenom, string tel, string mail, string profilLibelle)
+    {
+        Id = id;
+        Nom = nom;
+        Prenom = prenom;
+        Tel = tel;
+        Mail = mail;
+        ProfilLibelle = profilLibelle;
+    }
+}
     }
 }

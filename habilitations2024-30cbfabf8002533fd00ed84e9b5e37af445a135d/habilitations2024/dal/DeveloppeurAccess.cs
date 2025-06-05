@@ -1,14 +1,11 @@
 ﻿using habilitations2024.model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace habilitations2024.dal
 {
     /// <summary>
-    /// Classe permettant de gérer les demandes concernant les developpeurs
+    /// Classe permettant de gérer les demandes concernant les développeurs
     /// </summary>
     public class DeveloppeurAccess
     {
@@ -26,29 +23,26 @@ namespace habilitations2024.dal
         }
 
         /// <summary>
-        /// Controle si l'utillisateur a le droit de se connecter (nom, prénom, pwd et profil "admin")
+        /// Controle si l'utilisateur a le droit de se connecter (nom, prénom, pwd et profil "admin")
         /// </summary>
-        /// <param name="nom"></param>
-        /// <param name="prenom"></param>
-        /// <param name="pwd"></param>
+        /// <param name="admin"></param>
         /// <returns>vrai si l'utilisateur a le profil "admin"</returns>
-        public Boolean ControleAuthentification(Admin admin)
+        public bool ControleAuthentification(Admin admin)
         {
             if (access.Manager != null)
             {
-                string req = "select * from developpeur d join profil p on d.idprofil=p.idprofil ";
-                req += "where d.nom=@nom and d.prenom=@prenom and pwd=SHA2(@pwd, 256) and p.nom='admin';";
-                Dictionary<string, object> parameters = new Dictionary<string, object>();
-                parameters.Add("@nom", admin.Nom);
-                parameters.Add("@prenom", admin.Prenom);
-                parameters.Add("@pwd", admin.Pwd);
+                string req = "select * from developpeur d join profil p on d.idprofil = p.idprofil " +
+                             "where d.nom = @nom and d.prenom = @prenom and pwd = SHA2(@pwd, 256) and p.nom = 'admin';";
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { "@nom", admin.Nom },
+                    { "@prenom", admin.Prenom },
+                    { "@pwd", admin.Pwd }
+                };
                 try
                 {
-                    List<Object[]> records = access.Manager.ReqSelect(req, parameters);
-                    if (records != null)
-                    {
-                        return (records.Count > 0);
-                    }
+                    List<object[]> records = access.Manager.ReqSelect(req, parameters);
+                    return records != null && records.Count > 0;
                 }
                 catch (Exception e)
                 {
@@ -60,27 +54,72 @@ namespace habilitations2024.dal
         }
 
         /// <summary>
-        /// Récupère et retourne les développeurs
+        /// Récupère et retourne les développeurs sans filtre (ancienne version)
         /// </summary>
         /// <returns>liste des développeurs</returns>
-        public List<Developpeur> GetLesDeveloppeurs()
+        public List<Developpeur> GetLesDeveloppeursSansFiltre()
         {
             List<Developpeur> lesDeveloppeurs = new List<Developpeur>();
             if (access.Manager != null)
             {
-                string req = "select d.iddeveloppeur as iddeveloppeur, d.nom as nom, d.prenom as prenom, d.tel as tel, d.mail as mail, p.idprofil as idprofil, p.nom as profil ";
-                req += "from developpeur d join profil p on (d.idprofil = p.idprofil) ";
-                req += "order by nom, prenom;";
+                string req = "select d.iddeveloppeur, d.nom, d.prenom, d.tel, d.mail, p.idprofil, p.nom " +
+                             "from developpeur d join profil p on d.idprofil = p.idprofil " +
+                             "order by d.nom, d.prenom;";
                 try
                 {
-                    List<Object[]> records = access.Manager.ReqSelect(req);
+                    List<object[]> records = access.Manager.ReqSelect(req);
                     if (records != null)
                     {
-                        foreach (Object[] record in records)
+                        foreach (object[] record in records)
                         {
                             Profil profil = new Profil((int)record[5], (string)record[6]);
                             Developpeur developpeur = new Developpeur((int)record[0], (string)record[1], (string)record[2],
                                 (string)record[3], (string)record[4], profil);
+                            lesDeveloppeurs.Add(developpeur);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Environment.Exit(0);
+                }
+            }
+            return lesDeveloppeurs;
+        }
+
+        /// <summary>
+        /// Récupère et retourne les développeurs avec filtre optionnel sur profil
+        /// </summary>
+        /// <param name="profil">Filtre sur le nom du profil</param>
+        /// <returns>liste des développeurs filtrés</returns>
+        public List<Developpeur> GetLesDeveloppeurs(string profil = null)
+        {
+            List<Developpeur> lesDeveloppeurs = new List<Developpeur>();
+            if (access.Manager != null)
+            {
+                string req = "select d.iddeveloppeur, d.nom, d.prenom, d.tel, d.mail, p.idprofil, p.nom " +
+                             "from developpeur d join profil p on d.idprofil = p.idprofil ";
+                Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+                if (!string.IsNullOrEmpty(profil))
+                {
+                    req += "where p.nom = @profil ";
+                    parameters.Add("@profil", profil);
+                }
+
+                req += "order by d.nom, d.prenom;";
+
+                try
+                {
+                    List<object[]> records = access.Manager.ReqSelect(req, parameters);
+                    if (records != null)
+                    {
+                        foreach (object[] record in records)
+                        {
+                            Profil profilObj = new Profil((int)record[5], (string)record[6]);
+                            Developpeur developpeur = new Developpeur((int)record[0], (string)record[1], (string)record[2],
+                                (string)record[3], (string)record[4], profilObj);
                             lesDeveloppeurs.Add(developpeur);
                         }
                     }
@@ -103,8 +142,10 @@ namespace habilitations2024.dal
             if (access.Manager != null)
             {
                 string req = "delete from developpeur where iddeveloppeur = @iddeveloppeur;";
-                Dictionary<string, object> parameters = new Dictionary<string, object>();
-                parameters.Add("@iddeveloppeur", developpeur.Iddeveloppeur);
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { "@iddeveloppeur", developpeur.Iddeveloppeur }
+                };
                 try
                 {
                     access.Manager.ReqUpdate(req, parameters);
@@ -125,15 +166,17 @@ namespace habilitations2024.dal
         {
             if (access.Manager != null)
             {
-                string req = "insert into developpeur(nom, prenom, tel, mail, pwd, idprofil) ";
-                req += "values (@nom, @prenom, @tel, @mail, SHA2(@pwd, 256), @idprofil);";
-                Dictionary<string, object> parameters = new Dictionary<string, object>();
-                parameters.Add("@nom", developpeur.Nom);
-                parameters.Add("@prenom", developpeur.Prenom);
-                parameters.Add("@tel", developpeur.Tel);
-                parameters.Add("@mail", developpeur.Mail);
-                parameters.Add("@pwd", developpeur.Nom);
-                parameters.Add("@idprofil", developpeur.Profil.Idprofil);
+                string req = "insert into developpeur(nom, prenom, tel, mail, pwd, idprofil) " +
+                             "values (@nom, @prenom, @tel, @mail, SHA2(@pwd, 256), @idprofil);";
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { "@nom", developpeur.Nom },
+                    { "@prenom", developpeur.Prenom },
+                    { "@tel", developpeur.Tel },
+                    { "@mail", developpeur.Mail },
+                    { "@pwd", developpeur.Pwd },      // Correction : tu avais developpeur.Nom ici, doit être developpeur.Pwd
+                    { "@idprofil", developpeur.Profil.Idprofil }
+                };
                 try
                 {
                     access.Manager.ReqUpdate(req, parameters);
@@ -154,15 +197,17 @@ namespace habilitations2024.dal
         {
             if (access.Manager != null)
             {
-                string req = "update developpeur set nom = @nom, prenom = @prenom, tel = @tel, mail = @mail, idprofil = @idprofil ";
-                req += "where iddeveloppeur = @iddeveloppeur;";
-                Dictionary<string, object> parameters = new Dictionary<string, object>();
-                parameters.Add("@idDeveloppeur", developpeur.Iddeveloppeur);
-                parameters.Add("@nom", developpeur.Nom);
-                parameters.Add("@prenom", developpeur.Prenom);
-                parameters.Add("@tel", developpeur.Tel);
-                parameters.Add("@mail", developpeur.Mail);
-                parameters.Add("@idprofil", developpeur.Profil.Idprofil);
+                string req = "update developpeur set nom = @nom, prenom = @prenom, tel = @tel, mail = @mail, idprofil = @idprofil " +
+                             "where iddeveloppeur = @iddeveloppeur;";
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { "@iddeveloppeur", developpeur.Iddeveloppeur },  // attention majuscules cohérentes
+                    { "@nom", developpeur.Nom },
+                    { "@prenom", developpeur.Prenom },
+                    { "@tel", developpeur.Tel },
+                    { "@mail", developpeur.Mail },
+                    { "@idprofil", developpeur.Profil.Idprofil }
+                };
                 try
                 {
                     access.Manager.ReqUpdate(req, parameters);
@@ -176,18 +221,19 @@ namespace habilitations2024.dal
         }
 
         /// <summary>
-        /// Demande de modification du pwd
+        /// Demande de modification du mot de passe
         /// </summary>
         /// <param name="developpeur">objet developpeur avec nouveau pwd</param>
         public void UpdatePwd(Developpeur developpeur)
         {
             if (access.Manager != null)
             {
-                string req = "update developpeur set pwd = SHA2(@pwd, 256) ";
-                req += "where iddeveloppeur = @iddeveloppeur;";
-                Dictionary<string, object> parameters = new Dictionary<string, object>();
-                parameters.Add("@idDeveloppeur", developpeur.Iddeveloppeur);
-                parameters.Add("@pwd", developpeur.Pwd);
+                string req = "update developpeur set pwd = SHA2(@pwd, 256) where iddeveloppeur = @iddeveloppeur;";
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { "@iddeveloppeur", developpeur.Iddeveloppeur },
+                    { "@pwd", developpeur.Pwd }
+                };
                 try
                 {
                     access.Manager.ReqUpdate(req, parameters);
@@ -199,6 +245,5 @@ namespace habilitations2024.dal
                 }
             }
         }
-
     }
 }
