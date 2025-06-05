@@ -56,5 +56,21 @@ namespace habilitations2024.dal
             return lesProfils;
         }
 
+        // ===== AJOUT de la méthode 2, telle quelle, sous la méthode existante =====
+
+        public static List<Profil> GetLesProfils()
+        {
+            string sql = "SELECT * FROM profil";
+            List<Object[]> records = BddManager.GetInstance(ConfigurationManager.ConnectionStrings["HabilitationsDB"].ConnectionString)
+                                              .ReqSelect(sql);
+
+            List<Profil> lesProfils = new List<Profil>();
+            foreach (Object[] row in records)
+            {
+                lesProfils.Add(new Profil((int)row[0], (string)row[1]));
+            }
+            return lesProfils;
+        }
+
     }
 }
