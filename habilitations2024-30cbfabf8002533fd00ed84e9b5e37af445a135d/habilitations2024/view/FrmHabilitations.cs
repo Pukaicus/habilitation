@@ -256,6 +256,47 @@ namespace habilitations2024.view
                 txtMail.Text = "";
             }
         }
+public partial class Form1 : Form
+{
+    private DeveloppeurAccess developpeurAccess = new DeveloppeurAccess();
+
+    public Form1()
+    {
+        InitializeComponent();
+        RemplirComboBoxProfil();
+        comboBoxProfil.SelectedIndexChanged += ComboBoxProfil_SelectedIndexChanged;
+        AfficherDeveloppeurs();  // Affiche tout au début
+    }
+
+    private void RemplirComboBoxProfil()
+    {
+        comboBoxProfil.Items.Clear();
+        comboBoxProfil.Items.Add("");  // Ligne vide pour désactiver le filtre
+        // Récupérer tous les profils distincts (ici on simule)
+        var profils = developpeurAccess.GetLesDeveloppeurs()
+                                      .Select(d => d.Profil)
+                                      .Distinct()
+                                      .ToList();
+
+        foreach (var p in profils)
+        {
+            comboBoxProfil.Items.Add(p);
+        }
+        comboBoxProfil.SelectedIndex = 0; // Ligne vide sélectionnée par défaut
+    }
+
+    private void AfficherDeveloppeurs()
+    {
+        string profilSelectionne = comboBoxProfil.SelectedItem?.ToString() ?? "";
+        var liste = developpeurAccess.GetLesDeveloppeurs(profilSelectionne);
+        dataGridViewDeveloppeurs.DataSource = liste;
+    }
+
+    private void ComboBoxProfil_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        AfficherDeveloppeurs();
+    }
+}
 
         /// <summary>
         /// Modification d'affichage suivant si on est ou non en cours de modif du pwd

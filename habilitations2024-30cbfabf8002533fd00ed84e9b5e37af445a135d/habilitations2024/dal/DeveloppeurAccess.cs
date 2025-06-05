@@ -132,6 +132,34 @@ namespace habilitations2024.dal
             }
             return lesDeveloppeurs;
         }
+public class DeveloppeurAccess
+{
+    // Exemple simple, ta vraie méthode va interagir avec ta BDD
+    private List<Developpeur> listeDeveloppeurs = new List<Developpeur>()
+    {
+        new Developpeur{ Id=1, Nom="Dupont", Profil="Frontend"},
+        new Developpeur{ Id=2, Nom="Martin", Profil="Backend"},
+        new Developpeur{ Id=3, Nom="Durand", Profil="Frontend"},
+        new Developpeur{ Id=4, Nom="Lemoine", Profil="Fullstack"}
+    };
+
+    // Nouvelle méthode modifiée
+    public List<Developpeur> GetLesDeveloppeurs(string profil = "")
+    {
+        if (string.IsNullOrEmpty(profil))
+            return listeDeveloppeurs; // Tous les devs
+        else
+            return listeDeveloppeurs.Where(d => d.Profil == profil).ToList();
+    }
+}
+
+public class Developpeur
+{
+    public int Id { get; set; }
+    public string Nom { get; set; }
+    public string Profil { get; set; }
+}
+
 
         /// <summary>
         /// Demande de suppression d'un développeur
